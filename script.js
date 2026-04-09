@@ -73,6 +73,11 @@ async function loadConfigs() {
   return snapshot.docs.map(doc => doc.data());
 }
 
+// --- IMPORTS ---
+import flatpickr from "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/esm/index.js";
+import "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/pl.js";
+import html2pdf from "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     // Główny ekran
     document.getElementById('configurator-panel').addEventListener('click', showConfigurator);
