@@ -123,23 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Konfigurator
     document.getElementById('back-to-main-from-config').addEventListener('click', showMain);
 
-    // Kalendarz
-    function initCalendar() {
-        if (window.fp) window.fp.destroy();
-        // Tu możesz pobierać wydarzenia z Firestore jeśli chcesz
-        // const events = await loadConfigs();
-        const events = JSON.parse(localStorage.getItem('events')) || [];
-        const occupiedDates = events.map(e => e.eventDate);
-        window.fp = flatpickr("#event-date", {
-            dateFormat: "Y-m-d",
-            minDate: "today",
-            locale: 'pl',
-            dateClass: function(date) {
-                const dateStr = date.toISOString().split('T')[0];
-                return occupiedDates.includes(dateStr) ? 'occupied' : '';
-            }
-        });
-    }
+    // Wywołanie globalnej funkcji initCalendar
+    initCalendar();
 
     let scheduleDate = new Date();
 
@@ -191,8 +176,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderScheduleCalendar(new Date(year, month + 1, 1));
         });
     }
-
-    initCalendar();
 
     // Inicjalizacja dań z kategorami
     const dishes = [
