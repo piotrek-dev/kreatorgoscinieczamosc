@@ -32,7 +32,228 @@ body {
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
 }
 
+    /* ===== RESPONSIVE DESIGN ===== */
+
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+        /* Main screen panels */
+        #main-screen {
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .panel {
+            min-height: 120px;
+            padding: 20px;
+        }
+
+        .panel h3 {
+            font-size: 1.2rem;
+        }
+
+        /* Configurator */
+        #configurator {
+            padding: 20px;
+        }
+
+        #configurator h2 {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        }
+
+        .step {
+            padding: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            font-size: 1rem;
+        }
+
+        .dish-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .dish-item {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+
+        .navigation-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            width: 100%;
+
+        }
+
+        /* Calculator */
+        #calculator {
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .calc-row {
+            margin-bottom: 10px;
+        }
+
+        .calc-label {
+            font-size: 0.9rem;
+        }
+
+        .calc-value {
+            font-size: 1.1rem;
+        }
+
+        /* Catalog */
+        #catalog {
+            padding: 20px;
+        }
+
+        #catalog h2 {
+            font-size: 1.8rem;
+        }
+
+        .filter-section {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .event-card {
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .event-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .edit-btn,
+        .delete-btn,
+        .download-pdf-btn {
+            width: 100%;
+            padding: 10px;
+        }
+
+        /* Schedule */
+        #schedule {
+            padding: 20px;
+        }
+
+        #schedule h2 {
+            font-size: 1.8rem;
+        }
+
+        .schedule-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .schedule-header h2 {
+            margin: 0;
+        }
+
+        .schedule-header button {
+            width: 100%;
+            max-width: 250px;
+        }
+
+        #schedule-calendar {
+            font-size: 0.9rem;
+        }
+
+        .schedule-weekdays {
+            font-size: 0.8rem;
+        }
+
+        .schedule-cell {
+            min-height: 40px;
+            padding: 5px;
+            font-size: 0.8rem;
+        }
+
+        /* Modal */
+        .modal-content {
+            width: 95%;
+            max-width: none;
+            margin: 10px;
+            padding: 20px;
+        }
+
+        .modal-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            width: 100%;
 .panel h2 {
+        }
+    }
+
+    /* Small mobile devices */
+    @media (max-width: 480px) {
+        #main-screen {
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .panel {
+            min-height: 100px;
+            padding: 15px;
+        }
+
+        .panel h3 {
+            font-size: 1.1rem;
+        }
+
+        .dish-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .schedule-header {
+            gap: 10px;
+        }
+
+        .schedule-header button {
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+        #schedule-calendar {
+            font-size: 0.8rem;
+        }
+
+        .schedule-cell {
+            min-height: 35px;
+            font-size: 0.7rem;
+        }
+    }
+
     margin: 0;
     font-size: 2em;
     font-weight: 600;
@@ -557,4 +778,18 @@ label input[type="checkbox"] {
 
 #schedule button:hover {
     /* Style przeniesione do .schedule-header button:hover */
+}
+
+.event-client-name {
+    font-size: 0.75em;
+    color: #fff;
+    background: #764ba2;
+    border-radius: 6px;
+    margin-top: 4px;
+    padding: 2px 4px;
+    display: inline-block;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

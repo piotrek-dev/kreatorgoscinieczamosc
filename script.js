@@ -1,44 +1,76 @@
-// Firebase imports
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+// --- FIREBASE IMPORTS (dla <script type="module">) ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-// Funkcje pomocnicze dla Firebase
-async function saveEvent(event) {
-    try {
-        const docRef = await addDoc(collection(window.db, 'events'), event);
-        return { id: docRef.id, ...event };
-    } catch (error) {
-        console.error('Błąd podczas zapisywania wydarzenia:', error);
-        throw error;
-    }
+// --- INICJALIZACJA FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyByGs3eCcMN6qpaLYH__Aqbuxx_HhzvY5I",
+  authDomain: "goscinieczamosc-fe20d.firebaseapp.com",
+  projectId: "goscinieczamosc-fe20d",
+  storageBucket: "goscinieczamosc-fe20d.firebasestorage.app",
+  messagingSenderId: "306978019202",
+  appId: "1:306978019202:web:02c655aa77e6263677e19b"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// --- Rejestracja nowego użytkownika ---
+async function register(email, password) {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log("Zarejestrowano:", userCredential.user.uid);
+  } catch (error) {
+    console.error("Błąd rejestracji:", error.message);
+  }
 }
 
-async function getEvents() {
-    try {
-        const querySnapshot = await getDocs(collection(window.db, 'events'));
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-        console.error('Błąd podczas pobierania wydarzeń:', error);
-        return [];
-    }
+// --- Logowanie istniejącego użytkownika ---
+async function login(email, password) {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log("Zalogowano:", userCredential.user.uid);
+  } catch (error) {
+    console.error("Błąd logowania:", error.message);
+  }
 }
 
-async function updateEvent(eventId, updatedEvent) {
-    try {
-        const eventRef = doc(window.db, 'events', eventId);
-        await updateDoc(eventRef, updatedEvent);
-    } catch (error) {
-        console.error('Błąd podczas aktualizacji wydarzenia:', error);
-        throw error;
-    }
+// --- Sprawdzenie stanu zalogowania ---
+onAuthStateChanged(auth, user => {
+  if (user) {
+    console.log("Użytkownik zalogowany:", user.uid);
+  } else {
+    console.log("Brak zalogowanego użytkownika");
+  }
+});
+
+// --- Zapis konfiguracji do Firestore ---
+async function saveConfig(configData) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("Użytkownik niezalogowany!");
+    return;
+  }
+  try {
+    await addDoc(collection(db, "configs"), {
+      userId: user.uid,
+      configData: configData,
+      createdAt: new Date()
+    });
+    console.log("Konfiguracja zapisana w Firestore!");
+  } catch (error) {
+    console.error("Błąd zapisu:", error.message);
+  }
 }
 
-async function deleteEvent(eventId) {
-    try {
-        await deleteDoc(doc(window.db, 'events', eventId));
-    } catch (error) {
-        console.error('Błąd podczas usuwania wydarzenia:', error);
-        throw error;
-    }
+// --- Odczyt konfiguracji z Firestore ---
+async function loadConfigs() {
+  const user = auth.currentUser;
+  if (!user) return [];
+  const q = query(collection(db, "configs"), where("userId", "==", user.uid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data());
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -71,9 +103,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('back-to-main-from-config').addEventListener('click', showMain);
 
     // Kalendarz
-    async function initCalendar() {
+    function initCalendar() {
         if (window.fp) window.fp.destroy();
-        const events = await getEvents();
+        const events = JSON.parse(localStorage.getItem('events')) || [];
         const occupiedDates = events.map(e => e.eventDate);
         window.fp = flatpickr("#event-date", {
             dateFormat: "Y-m-d",
@@ -88,9 +120,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let scheduleDate = new Date();
 
-    async function renderScheduleCalendar(date = new Date()) {
+    function renderScheduleCalendar(date = new Date()) {
         scheduleDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        const events = await getEvents();
+        const events = JSON.parse(localStorage.getItem('events')) || [];
         const occupiedDates = new Set(events.map(e => e.eventDate));
         const monthNames = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
         const dayNames = ['Pn','Wt','Śr','Cz','Pt','So','Nd'];
@@ -120,15 +152,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const occupied = occupiedDates.has(dateStr);
-            grid.innerHTML += `<div class="schedule-cell ${occupied ? 'occupied' : ''}">${day}</div>`;
+            const eventForDay = events.find(e => e.eventDate === dateStr);
+            const occupied = Boolean(eventForDay);
+            let cellContent = `${day}`;
+            if (occupied) {
+                cellContent += `<div class='event-client-name'>${eventForDay.clientName}</div>`;
+            }
+            grid.innerHTML += `<div class="schedule-cell ${occupied ? 'occupied' : ''}">${cellContent}</div>`;
         }
 
-        calendar.querySelector('#schedule-prev').addEventListener('click', async () => {
-            await renderScheduleCalendar(new Date(year, month - 1, 1));
+        calendar.querySelector('#schedule-prev').addEventListener('click', () => {
+            renderScheduleCalendar(new Date(year, month - 1, 1));
         });
-        calendar.querySelector('#schedule-next').addEventListener('click', async () => {
-            await renderScheduleCalendar(new Date(year, month + 1, 1));
+        calendar.querySelector('#schedule-next').addEventListener('click', () => {
+            renderScheduleCalendar(new Date(year, month + 1, 1));
         });
     }
 
@@ -249,23 +286,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('event-type').addEventListener('change', updateCalculator);
     document.getElementById('wiejski-stol').addEventListener('change', updateCalculator);
 
-    async function deleteEvent(id) {
+    function deleteEvent(id) {
         if (confirm('Czy na pewno chcesz usunąć tę imprezę?')) {
-            try {
-                await deleteEvent(id);
-                await loadEvents();
-                initCalendar(); // Aktualizuj kalendarz
-                if (document.getElementById('schedule').style.display === 'block') {
-                    await renderScheduleCalendar(scheduleDate);
-                }
-            } catch (error) {
-                alert('Błąd podczas usuwania wydarzenia: ' + error.message);
+            const events = JSON.parse(localStorage.getItem('events')) || [];
+            const updatedEvents = events.filter(e => e.id != id);
+            localStorage.setItem('events', JSON.stringify(updatedEvents));
+            loadEvents();
+            initCalendar(); // Aktualizuj kalendarz
+            if (document.getElementById('schedule').style.display === 'block') {
+                renderScheduleCalendar(scheduleDate);
             }
         }
     }
 
-    async function editEvent(id) {
-        const events = await getEvents();
+    function editEvent(id) {
+        const events = JSON.parse(localStorage.getItem('events')) || [];
         const event = events.find(e => e.id == id);
         if (event) {
             editingEventId = id;
@@ -306,20 +341,20 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(1);
     }
 
-    async function showCatalog() {
+    function showCatalog() {
         document.getElementById('main-screen').style.display = 'none';
         document.getElementById('configurator').style.display = 'none';
         document.getElementById('catalog').style.display = 'block';
         document.getElementById('schedule').style.display = 'none';
-        await loadEvents();
+        loadEvents();
     }
 
-    async function showSchedule() {
+    function showSchedule() {
         document.getElementById('main-screen').style.display = 'none';
         document.getElementById('configurator').style.display = 'none';
         document.getElementById('catalog').style.display = 'none';
         document.getElementById('schedule').style.display = 'block';
-        await renderScheduleCalendar();
+        renderScheduleCalendar();
     }
 
     function showMain() {
@@ -330,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editingEventId = null;
     }
 
-    async function saveEvent() {
+    function saveEvent() {
         const clientName = document.getElementById('client-name').value;
         const eventType = document.getElementById('event-type').value;
         const numPeople = document.getElementById('num-people').value;
@@ -345,36 +380,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const event = {
+            id: editingEventId || Date.now(),
             clientName,
             eventType,
-            numPeople: parseInt(numPeople),
-            numDishes: parseInt(numDishes),
+            numPeople,
+            numDishes,
             wiejskiStol,
             selectedDishes: selectedDishesStr,
             eventDate
         };
 
-        try {
-            if (editingEventId) {
-                await updateEvent(editingEventId, event);
-                editingEventId = null;
-            } else {
-                await saveEvent(event);
+        const events = JSON.parse(localStorage.getItem('events')) || [];
+        if (editingEventId) {
+            const index = events.findIndex(e => e.id == editingEventId);
+            if (index !== -1) {
+                events[index] = event;
             }
-
-            alert('Impreza zapisana!');
-            initCalendar(); // Aktualizuj kalendarz
-            if (document.getElementById('schedule').style.display === 'block') {
-                await renderScheduleCalendar(scheduleDate);
-            }
-            showMain();
-        } catch (error) {
-            alert('Błąd podczas zapisywania: ' + error.message);
+            editingEventId = null;
+        } else {
+            events.push(event);
         }
+        localStorage.setItem('events', JSON.stringify(events));
+
+        alert('Impreza zapisana!');
+        initCalendar(); // Aktualizuj kalendarz
+        if (document.getElementById('schedule').style.display === 'block') {
+            renderScheduleCalendar(scheduleDate);
+        }
+        showMain();
     }
 
-    async function downloadPDF(eventId) {
-        const events = await getEvents();
+    function downloadPDF(eventId) {
+        const events = JSON.parse(localStorage.getItem('events')) || [];
         const event = events.find(e => e.id == eventId);
         
         if (!event) return;
@@ -515,8 +552,8 @@ document.addEventListener('DOMContentLoaded', function() {
         html2pdf().set(opt).from(element).save();
     }
 
-    async function loadEvents() {
-        const events = await getEvents();
+    function loadEvents() {
+        const events = JSON.parse(localStorage.getItem('events')) || [];
         const filter = document.getElementById('filter-category').value;
         const list = document.getElementById('events-list');
         list.innerHTML = '';
@@ -547,7 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function filterEvents() {
-        await loadEvents();
+    function filterEvents() {
+        loadEvents();
     }
 });
+
+window.showConfigurator = showConfigurator;
+window.showCatalog = showCatalog;
+window.showSchedule = showSchedule;
