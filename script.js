@@ -1,99 +1,3 @@
-// --- IMPORTS ---
-import flatpickr from "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/esm/index.js";
-import "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/pl.js";
-import html2pdf from "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
-
-// --- INICJALIZACJA FIREBASE ---
-const firebaseConfig = {
-  apiKey: "AIzaSyByGs3eCcMN6qpaLYH__Aqbuxx_HhzvY5I",
-  authDomain: "goscinieczamosc-fe20d.firebaseapp.com",
-  projectId: "goscinieczamosc-fe20d",
-  storageBucket: "goscinieczamosc-fe20d.firebasestorage.app",
-  messagingSenderId: "306978019202",
-  appId: "1:306978019202:web:02c655aa77e6263677e19b"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// --- Rejestracja nowego użytkownika ---
-async function register(email, password) {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log("Zarejestrowano:", userCredential.user.uid);
-  } catch (error) {
-    console.error("Błąd rejestracji:", error.message);
-  }
-}
-
-// --- Logowanie istniejącego użytkownika ---
-async function login(email, password) {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log("Zalogowano:", userCredential.user.uid);
-  } catch (error) {
-    console.error("Błąd logowania:", error.message);
-  }
-}
-
-// --- Sprawdzenie stanu zalogowania ---
-onAuthStateChanged(auth, user => {
-  if (user) {
-    console.log("Użytkownik zalogowany:", user.uid);
-  } else {
-    console.log("Brak zalogowanego użytkownika");
-  }
-});
-
-// --- Zapis konfiguracji do Firestore ---
-async function saveConfig(configData) {
-  const user = auth.currentUser;
-  if (!user) {
-    console.error("Użytkownik niezalogowany!");
-    return;
-  }
-  try {
-    await addDoc(collection(db, "configs"), {
-      userId: user.uid,
-      configData: configData,
-      createdAt: new Date()
-    });
-    console.log("Konfiguracja zapisana w Firestore!");
-  } catch (error) {
-    console.error("Błąd zapisu:", error.message);
-  }
-}
-
-// --- Odczyt konfiguracji z Firestore ---
-async function loadConfigs() {
-  const user = auth.currentUser;
-  if (!user) return [];
-  const q = query(collection(db, "configs"), where("userId", "==", user.uid));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => doc.data());
-}
-
-// --- KALENDARZ: flatpickr ---
-function initCalendar() {
-    if (window.fp) window.fp.destroy();
-    // Tu możesz pobierać wydarzenia z Firestore jeśli chcesz
-    // const events = await loadConfigs();
-    const events = JSON.parse(localStorage.getItem('events')) || [];
-    const occupiedDates = events.map(e => e.eventDate);
-    window.fp = flatpickr("#event-date", {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        locale: 'pl',
-        dateClass: function(date) {
-            const dateStr = date.toISOString().split('T')[0];
-            return occupiedDates.includes(dateStr) ? 'occupied' : '';
-        }
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     // Główny ekran
     document.getElementById('configurator-panel').addEventListener('click', showConfigurator);
@@ -123,8 +27,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Konfigurator
     document.getElementById('back-to-main-from-config').addEventListener('click', showMain);
 
-    // Wywołanie globalnej funkcji initCalendar
-    initCalendar();
+    // Kalendarz
+    function initCalendar() {
+        if (window.fp) window.fp.destroy();
+        const events = JSON.parse(localStorage.getItem('events')) || [];
+        const occupiedDates = events.map(e => e.eventDate);
+        window.fp = flatpickr("#event-date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            locale: 'pl',
+            dateClass: function(date) {
+                const dateStr = date.toISOString().split('T')[0];
+                return occupiedDates.includes(dateStr) ? 'occupied' : '';
+            }
+        });
+    }
 
     let scheduleDate = new Date();
 
@@ -176,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
             renderScheduleCalendar(new Date(year, month + 1, 1));
         });
     }
+
+    initCalendar();
 
     // Inicjalizacja dań z kategorami
     const dishes = [
@@ -594,7 +513,3 @@ document.addEventListener('DOMContentLoaded', function() {
         loadEvents();
     }
 });
-
-window.showConfigurator = showConfigurator;
-window.showCatalog = showCatalog;
-window.showSchedule = showSchedule;

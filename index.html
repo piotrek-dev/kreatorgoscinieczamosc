@@ -6,25 +6,14 @@
     <title>Kreator Imprezowy - Gościniec Zamość</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="style.css">
-    <script type="module">
-      // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-      // TODO: Add SDKs for Firebase products that you want to use
-      // https://firebase.google.com/docs/web/setup#available-libraries
-
-      // Your web app's Firebase configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyByGs3eCcMN6qpaLYH__Aqbuxx_HhzvY5I",
-        authDomain: "goscinieczamosc-fe20d.firebaseapp.com",
-        projectId: "goscinieczamosc-fe20d",
-        storageBucket: "goscinieczamosc-fe20d.firebasestorage.app",
-        messagingSenderId: "306978019202",
-        appId: "1:306978019202:web:02c655aa77e6263677e19b"
-      };
-
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-    </script>
+    <!-- FIREBASE (przygotowanie do Firestore) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> -->
+    <!-- <script>
+        // const firebaseConfig = { ... };
+        // firebase.initializeApp(firebaseConfig);
+        // const db = firebase.firestore();
+    </script> -->
 </head>
 <body>
     <div id="main-screen">
@@ -136,7 +125,9 @@
         <div id="schedule-calendar"></div>
     </div>
 
-    <script type="module" src="script.js"></script>
-    <!-- Wszystkie importy bibliotek są teraz w script.js -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
