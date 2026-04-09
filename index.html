@@ -120,6 +120,25 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzSokvPdra3HwxkNkFt7fI9lyonaSJctA",
+            authDomain: "goscinieczamosc.firebaseapp.com",
+            projectId: "goscinieczamosc",
+            storageBucket: "goscinieczamosc.firebasestorage.app",
+            messagingSenderId: "1074643756062",
+            appId: "1:1074643756062:web:9de8aace2d798812bb7a0f"
+        };
+        
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.firebaseApp);
+    </script>
+    
     <script src="script.js"></script>
 </body>
 </html>

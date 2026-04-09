@@ -1,3 +1,46 @@
+// Firebase imports
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+// Funkcje pomocnicze dla Firebase
+async function saveEvent(event) {
+    try {
+        const docRef = await addDoc(collection(window.db, 'events'), event);
+        return { id: docRef.id, ...event };
+    } catch (error) {
+        console.error('Błąd podczas zapisywania wydarzenia:', error);
+        throw error;
+    }
+}
+
+async function getEvents() {
+    try {
+        const querySnapshot = await getDocs(collection(window.db, 'events'));
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error('Błąd podczas pobierania wydarzeń:', error);
+        return [];
+    }
+}
+
+async function updateEvent(eventId, updatedEvent) {
+    try {
+        const eventRef = doc(window.db, 'events', eventId);
+        await updateDoc(eventRef, updatedEvent);
+    } catch (error) {
+        console.error('Błąd podczas aktualizacji wydarzenia:', error);
+        throw error;
+    }
+}
+
+async function deleteEvent(eventId) {
+    try {
+        await deleteDoc(doc(window.db, 'events', eventId));
+    } catch (error) {
+        console.error('Błąd podczas usuwania wydarzenia:', error);
+        throw error;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Główny ekran
     document.getElementById('configurator-panel').addEventListener('click', showConfigurator);
@@ -28,9 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('back-to-main-from-config').addEventListener('click', showMain);
 
     // Kalendarz
-    function initCalendar() {
+    async function initCalendar() {
         if (window.fp) window.fp.destroy();
-        const events = JSON.parse(localStorage.getItem('events')) || [];
+        const events = await getEvents();
         const occupiedDates = events.map(e => e.eventDate);
         window.fp = flatpickr("#event-date", {
             dateFormat: "Y-m-d",
@@ -45,9 +88,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let scheduleDate = new Date();
 
-    function renderScheduleCalendar(date = new Date()) {
+    async function renderScheduleCalendar(date = new Date()) {
         scheduleDate = new Date(date.getFullYear(), date.getMonth(), 1);
-        const events = JSON.parse(localStorage.getItem('events')) || [];
+        const events = await getEvents();
         const occupiedDates = new Set(events.map(e => e.eventDate));
         const monthNames = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
         const dayNames = ['Pn','Wt','Śr','Cz','Pt','So','Nd'];
@@ -81,11 +124,11 @@ document.addEventListener('DOMContentLoaded', function() {
             grid.innerHTML += `<div class="schedule-cell ${occupied ? 'occupied' : ''}">${day}</div>`;
         }
 
-        calendar.querySelector('#schedule-prev').addEventListener('click', () => {
-            renderScheduleCalendar(new Date(year, month - 1, 1));
+        calendar.querySelector('#schedule-prev').addEventListener('click', async () => {
+            await renderScheduleCalendar(new Date(year, month - 1, 1));
         });
-        calendar.querySelector('#schedule-next').addEventListener('click', () => {
-            renderScheduleCalendar(new Date(year, month + 1, 1));
+        calendar.querySelector('#schedule-next').addEventListener('click', async () => {
+            await renderScheduleCalendar(new Date(year, month + 1, 1));
         });
     }
 
@@ -206,21 +249,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('event-type').addEventListener('change', updateCalculator);
     document.getElementById('wiejski-stol').addEventListener('change', updateCalculator);
 
-    function deleteEvent(id) {
+    async function deleteEvent(id) {
         if (confirm('Czy na pewno chcesz usunąć tę imprezę?')) {
-            const events = JSON.parse(localStorage.getItem('events')) || [];
-            const updatedEvents = events.filter(e => e.id != id);
-            localStorage.setItem('events', JSON.stringify(updatedEvents));
-            loadEvents();
-            initCalendar(); // Aktualizuj kalendarz
-            if (document.getElementById('schedule').style.display === 'block') {
-                renderScheduleCalendar(scheduleDate);
+            try {
+                await deleteEvent(id);
+                await loadEvents();
+                initCalendar(); // Aktualizuj kalendarz
+                if (document.getElementById('schedule').style.display === 'block') {
+                    await renderScheduleCalendar(scheduleDate);
+                }
+            } catch (error) {
+                alert('Błąd podczas usuwania wydarzenia: ' + error.message);
             }
         }
     }
 
-    function editEvent(id) {
-        const events = JSON.parse(localStorage.getItem('events')) || [];
+    async function editEvent(id) {
+        const events = await getEvents();
         const event = events.find(e => e.id == id);
         if (event) {
             editingEventId = id;
@@ -261,20 +306,20 @@ document.addEventListener('DOMContentLoaded', function() {
         showStep(1);
     }
 
-    function showCatalog() {
+    async function showCatalog() {
         document.getElementById('main-screen').style.display = 'none';
         document.getElementById('configurator').style.display = 'none';
         document.getElementById('catalog').style.display = 'block';
         document.getElementById('schedule').style.display = 'none';
-        loadEvents();
+        await loadEvents();
     }
 
-    function showSchedule() {
+    async function showSchedule() {
         document.getElementById('main-screen').style.display = 'none';
         document.getElementById('configurator').style.display = 'none';
         document.getElementById('catalog').style.display = 'none';
         document.getElementById('schedule').style.display = 'block';
-        renderScheduleCalendar();
+        await renderScheduleCalendar();
     }
 
     function showMain() {
@@ -285,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
         editingEventId = null;
     }
 
-    function saveEvent() {
+    async function saveEvent() {
         const clientName = document.getElementById('client-name').value;
         const eventType = document.getElementById('event-type').value;
         const numPeople = document.getElementById('num-people').value;
@@ -300,38 +345,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const event = {
-            id: editingEventId || Date.now(),
             clientName,
             eventType,
-            numPeople,
-            numDishes,
+            numPeople: parseInt(numPeople),
+            numDishes: parseInt(numDishes),
             wiejskiStol,
             selectedDishes: selectedDishesStr,
             eventDate
         };
 
-        const events = JSON.parse(localStorage.getItem('events')) || [];
-        if (editingEventId) {
-            const index = events.findIndex(e => e.id == editingEventId);
-            if (index !== -1) {
-                events[index] = event;
+        try {
+            if (editingEventId) {
+                await updateEvent(editingEventId, event);
+                editingEventId = null;
+            } else {
+                await saveEvent(event);
             }
-            editingEventId = null;
-        } else {
-            events.push(event);
-        }
-        localStorage.setItem('events', JSON.stringify(events));
 
-        alert('Impreza zapisana!');
-        initCalendar(); // Aktualizuj kalendarz
-        if (document.getElementById('schedule').style.display === 'block') {
-            renderScheduleCalendar(scheduleDate);
+            alert('Impreza zapisana!');
+            initCalendar(); // Aktualizuj kalendarz
+            if (document.getElementById('schedule').style.display === 'block') {
+                await renderScheduleCalendar(scheduleDate);
+            }
+            showMain();
+        } catch (error) {
+            alert('Błąd podczas zapisywania: ' + error.message);
         }
-        showMain();
     }
 
-    function downloadPDF(eventId) {
-        const events = JSON.parse(localStorage.getItem('events')) || [];
+    async function downloadPDF(eventId) {
+        const events = await getEvents();
         const event = events.find(e => e.id == eventId);
         
         if (!event) return;
@@ -472,8 +515,8 @@ document.addEventListener('DOMContentLoaded', function() {
         html2pdf().set(opt).from(element).save();
     }
 
-    function loadEvents() {
-        const events = JSON.parse(localStorage.getItem('events')) || [];
+    async function loadEvents() {
+        const events = await getEvents();
         const filter = document.getElementById('filter-category').value;
         const list = document.getElementById('events-list');
         list.innerHTML = '';
@@ -504,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function filterEvents() {
-        loadEvents();
+    async function filterEvents() {
+        await loadEvents();
     }
 });
