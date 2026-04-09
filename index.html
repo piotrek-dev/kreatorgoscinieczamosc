@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kreator Imprezowy - Gościniec Zamość</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="main-screen">
+        <div class="panel" id="configurator-panel">
+            <h2>KONFIGURATOR</h2>
+            <p>Rozpocznij konfigurację nowej imprezy</p>
+        </div>
+        <div class="panel" id="catalog-panel">
+            <h2>KATALOG IMPREZ</h2>
+            <p>Przeglądaj zapisane imprezy</p>
+        </div>
+        <div class="panel" id="schedule-panel">
+            <h2>TERMINARZ</h2>
+            <p>Kalendarz z zajętymi dniami</p>
+        </div>
+    </div>
+
+    <div id="configurator" style="display: none;">
+        <div class="container">
+            <div class="form-section">
+                <div id="step1" class="step">
+                    <h3>Krok 1: Dane Klienta</h3>
+                    <input type="text" id="client-name" placeholder="Imię i Nazwisko Klienta" required>
+                    <button id="next1">Dalej</button>
+                </div>
+                <div id="step2" class="step" style="display: none;">
+                    <h3>Krok 2: Rodzaj Imprezy i Ilość Osób</h3>
+                    <select id="event-type">
+                        <option value="">Wybierz rodzaj imprezy</option>
+                        <option value="wesele">Wesele</option>
+                        <option value="chrzciny">Chrzciny</option>
+                        <option value="komunia">Komunia Święta</option>
+                        <option value="bankiet">Bankiet</option>
+                        <option value="okolicznosciowe">Imprezy Okolicznościowe</option>
+                        <option value="konferencyjna">Sala Konferencyjna</option>
+                        <option value="stypa">Stypa</option>
+                    </select>
+                    <input type="number" id="num-people" placeholder="Ilość osób" min="1" required>
+                    <button id="prev2">Wstecz</button>
+                    <button id="next2">Dalej</button>
+                </div>
+                <div id="step3" class="step" style="display: none;">
+                    <h3>Krok 3: Ilość Dań</h3>
+                    <input type="number" id="num-dishes" placeholder="Ilość dań" min="1" required>
+                    <button id="prev3">Wstecz</button>
+                    <button id="next3">Dalej</button>
+                </div>
+                <div id="step4" class="step" style="display: none;">
+                    <h3>Krok 4: Dodatki</h3>
+                    <label><input type="checkbox" id="wiejski-stol">Stół wiejski</label>
+                    <button id="prev4">Wstecz</button>
+                    <button id="next4">Dalej</button>
+                </div>
+                <div id="step5" class="step" style="display: none;">
+                    <h3>Krok 5: Wybór Dań</h3>
+                    <div id="dishes-list">
+                        <!-- Dań będą dodawane dynamicznie -->
+                    </div>
+                    <button id="prev5">Wstecz</button>
+                    <button id="next5">Dalej</button>
+                </div>
+                <div id="step6" class="step" style="display: none;">
+                    <h3>Krok 6: Wybór Termin</h3>
+                    <input type="text" id="event-date" placeholder="Wybierz termin">
+                    <button id="prev6">Wstecz</button>
+                    <button id="save-event">Zapisz Imprezę</button>
+                </div>
+            </div>
+            <div class="calculator">
+                <h3>Wycena</h3>
+                <div class="price-info">
+                    <div class="price-item">
+                        <span class="price-label">Kwota:</span>
+                        <span class="price-value"><span id="price-per-person">0</span> zł/osobę</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Kwota całkowita:</span>
+                        <span class="price-value"><span id="total-price">0</span> zł</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="back-to-main-from-config" class="back-button">Powrót do głównego ekranu</button>
+    </div>
+
+    <div id="catalog" style="display: none;">
+        <h2>Katalog Imprez</h2>
+        <select id="filter-category">
+            <option value="">Wszystkie</option>
+            <option value="wesele">Wesele</option>
+            <option value="chrzciny">Chrzciny</option>
+            <option value="komunia">Komunia Święta</option>
+            <option value="bankiet">Bankiet</option>
+            <option value="okolicznosciowe">Imprezy Okolicznościowe</option>
+            <option value="konferencyjna">Sala Konferencyjna</option>
+            <option value="stypa">Stypa</option>
+        </select>
+        <div id="events-list">
+            <!-- Zapisane imprezy będą wyświetlane tutaj -->
+        </div>
+        <button id="back-to-main">Powrót do głównego ekranu</button>
+    </div>
+
+    <div id="schedule" style="display: none;">
+        <div class="schedule-header">
+            <h2>Terminarz</h2>
+            <button id="back-to-main-from-schedule">Powrót do głównego ekranu</button>
+        </div>
+        <div id="schedule-calendar"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
