@@ -1,4 +1,7 @@
-// --- FIREBASE IMPORTS (dla <script type="module">) ---
+// --- IMPORTS ---
+import flatpickr from "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/esm/index.js";
+import "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/pl.js";
+import html2pdf from "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
@@ -73,10 +76,23 @@ async function loadConfigs() {
   return snapshot.docs.map(doc => doc.data());
 }
 
-// --- IMPORTS ---
-import flatpickr from "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/esm/index.js";
-import "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/pl.js";
-import html2pdf from "https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js";
+// --- KALENDARZ: flatpickr ---
+function initCalendar() {
+    if (window.fp) window.fp.destroy();
+    // Tu możesz pobierać wydarzenia z Firestore jeśli chcesz
+    // const events = await loadConfigs();
+    const events = JSON.parse(localStorage.getItem('events')) || [];
+    const occupiedDates = events.map(e => e.eventDate);
+    window.fp = flatpickr("#event-date", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        locale: 'pl',
+        dateClass: function(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return occupiedDates.includes(dateStr) ? 'occupied' : '';
+        }
+    });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Główny ekran
@@ -110,6 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Kalendarz
     function initCalendar() {
         if (window.fp) window.fp.destroy();
+        // Tu możesz pobierać wydarzenia z Firestore jeśli chcesz
+        // const events = await loadConfigs();
         const events = JSON.parse(localStorage.getItem('events')) || [];
         const occupiedDates = events.map(e => e.eventDate);
         window.fp = flatpickr("#event-date", {
